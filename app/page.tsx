@@ -1,10 +1,10 @@
-import ProjectShowCasePage from '@/components/HomeComponents/ProjectShowCasePage'
+import PerfumeCarousel from '@/components/PerfumeCarousel/PerfumeCarousel'
 import React from 'react'
 
 const page = () => {
   return (
     <div>
-      <ProjectShowCasePage/>
+       <PerfumeCarousel />;
       </div>
   )
 }

@@ -1,0 +1,61 @@
+.pc{position:relative;width:100vw;height:100vh;overflow:hidden;color:#fff;background:#000;
+  font-family:system-ui,-apple-system,"Helvetica Neue",sans-serif;touch-action:pan-y;user-select:none;cursor:grab}
+.pc:active{cursor:grabbing}
+/* grey fade rising from the bottom + coloured glow of the active perfume */
+.pc::before{content:"";position:absolute;inset:0;z-index:0;
+  background:linear-gradient(180deg,#000 0%,#000 38%,#1a1a1a 62%,#6d6d6d 100%)}
+.pc-glow{position:absolute;left:50%;bottom:-18%;width:60vw;height:50vh;transform:translateX(-50%);z-index:1;
+  background:radial-gradient(ellipse at center,var(--glow) 0%,transparent 68%);opacity:.55;filter:blur(40px);
+  transition:background .8s ease}
+.pc-canvas{position:absolute!important;inset:0;z-index:2}
+
+.pc-line{position:absolute;z-index:5;top:34px;left:4%;right:4%;height:1px;background:rgba(255,255,255,.22)}
+.pc-nav{position:absolute;z-index:5;top:0;left:0;right:0;height:130px;padding:0 4%;
+  display:flex;align-items:center;justify-content:space-between;font-size:15px;letter-spacing:.02em}
+.pc-sound{display:flex;align-items:center;gap:3px}
+.pc-sound i{display:inline-block;width:3px;height:12px;background:#fff;border-radius:1px;margin-left:2px;
+  animation:eq 1s ease-in-out infinite alternate}
+.pc-sound i:nth-child(2){animation-delay:.15s}.pc-sound i:nth-child(3){animation-delay:.3s}.pc-sound i:nth-child(4){animation-delay:.45s}
+@keyframes eq{from{height:5px}to{height:13px}}
+
+.pc-logo{position:absolute;left:50%;top:52px;transform:translateX(-50%);text-align:center;font-style:italic;
+  font-weight:900;font-size:34px;line-height:.9;letter-spacing:-.02em;text-shadow:0 0 30px rgba(255,255,255,.35)}
+.pc-right{display:flex;align-items:center;gap:36px}
+.pc-menu{display:flex;align-items:center;gap:12px;background:none;border:0;color:#fff;font:inherit;cursor:pointer}
+.pc-dots{display:grid;grid-template-columns:repeat(2,4px);gap:4px}
+.pc-dots b{width:4px;height:4px;border-radius:50%;background:#fff}
+.pc-contact{background:#fff;color:#111;border:0;border-radius:6px;padding:16px 28px;font:inherit;cursor:pointer;
+  box-shadow:0 0 30px rgba(255,255,255,.35)}
+
+.pc-c{position:absolute;z-index:5;width:10px;height:10px;border:0 solid rgba(255,255,255,.55)}
+.pc-c.tl{top:20%;left:4%;border-top-width:1px;border-left-width:1px}
+.pc-c.tr{top:20%;right:4%;border-top-width:1px;border-right-width:1px}
+.pc-c.bl{bottom:4%;left:4%;border-bottom-width:1px;border-left-width:1px}
+.pc-c.br{bottom:4%;right:4%;border-bottom-width:1px;border-right-width:1px}
+
+.pc-arrow{position:absolute;z-index:6;top:52%;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.25);
+  background:transparent;cursor:pointer}
+.pc-arrow::after{content:"";position:absolute;inset:0;margin:auto;width:8px;height:8px;border:solid #fff;border-width:0 1px 1px 0}
+.pc-arrow.l{left:calc(50% - 280px)}.pc-arrow.l::after{transform:rotate(135deg);left:4px}
+.pc-arrow.r{right:calc(50% - 280px)}.pc-arrow.r::after{transform:rotate(-45deg);right:4px}
+
+.pc-bottom{position:absolute;z-index:5;left:0;right:0;bottom:4%;display:flex;flex-direction:column;align-items:center;gap:22px;pointer-events:none}
+.pc-title{margin:0;font-style:italic;font-weight:900;font-size:clamp(44px,5.4vw,84px);line-height:.88;
+  letter-spacing:-.03em;text-align:center;text-transform:uppercase;animation:in .5s cubic-bezier(.2,.8,.2,1)}
+@keyframes in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+.pc-slider{pointer-events:auto;-webkit-appearance:none;appearance:none;width:33vw;min-width:240px;height:20px;background:transparent;cursor:pointer;--p:0%}
+.pc-slider::-webkit-slider-runnable-track{height:3px;border-radius:2px;
+  background:linear-gradient(90deg,#6f7bd9,#4fc0b0 35%,#e8a54a 65%,#e84fa6)}
+.pc-slider::-moz-range-track{height:3px;border-radius:2px;
+  background:linear-gradient(90deg,#6f7bd9,#4fc0b0 35%,#e8a54a 65%,#e84fa6)}
+.pc-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:-10px;border-radius:50%;
+  background:#46a3e8;border:0;box-shadow:0 0 14px rgba(70,163,232,.8)}
+.pc-slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#46a3e8;border:0;box-shadow:0 0 14px rgba(70,163,232,.8)}
+.pc-hint{margin:6px 0 0;font-size:15px;letter-spacing:.03em;color:rgba(255,255,255,.6)}
+
+@media (max-width:700px){
+  .pc-right .pc-menu{display:none}.pc-contact{padding:12px 18px}
+  .pc-arrow{display:none}.pc-slider{width:70vw}
+}
+@media (prefers-reduced-motion:reduce){.pc-sound i,.pc-title{animation:none}}
