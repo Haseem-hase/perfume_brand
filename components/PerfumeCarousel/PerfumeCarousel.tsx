@@ -1,19 +1,27 @@
 "use client";
 import * as THREE from "three";
-import { useEffect, useMemo, useRef, useState, MutableRefObject, CSSProperties, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type MutableRefObject } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Environment, Lightformer } from "@react-three/drei";
 import { Archivo } from "next/font/google";
-import "./Carousel.css";
-import { PERFUMES } from "./Perfumes";
 import PerfumeBottle, { type BottleHandle } from "./PerfumeBottle";
+import { PERFUMES } from "./Perfumes";
+import "./Carousel.css";
 
 const display = Archivo({ subsets: ["latin"], weight: ["900"], style: ["italic"] });
 
 const N = PERFUMES.length;
-const PIVOT_Y = 9; // the "wheel" centre, high above the screen
-const RADIUS = 9.3; // distance from pivot to bottles
-const STEP = 0.24; // angle (rad) between two bottles
+const RADIUS = 13; // radius of the horizontal ring (fitted to the reference screenshot)
+const STEP = 0.18; // angle (rad) between two bottles on the ring
+const ARC = 0.016; // how much the row bends: sides sit lower than the centre (smooth arch)
+const TILT = 0.028; // lean of each bottle toward the centre, grows smoothly with distance
+const RING_PITCH = -0.12; // camera sees a bit of the underside, like the reference
+const BOTTLE_SCALE = 1.15;
+// The ring must be longer than the screen so a bottle slides fully off-screen BEFORE it wraps round
+// (that wrap was the "blinking"). With few perfumes we repeat them: COPIES sets of N bottles.
+const COPIES = Math.max(1, Math.ceil(10 / N));
+const M = N * COPIES; // number of bottles actually drawn
+const CIRCLE_UNTIL = 4; // up to this many slots from the centre the path is the circle; after that it continues straight, off-screen
 
 /* ---------- silver pedestal at the top ---------- */
 function Pedestal() {
@@ -25,12 +33,22 @@ function Pedestal() {
     return new THREE.LatheGeometry(pts, 96);
   }, []);
   return (
-    <group position={[0, 3.1, -0.4]} rotation={[0.28, 0, 0]}>
+    <group position={[0, 2.95, -0.4]} rotation={[Math.PI - 0.3, 0, 0]} scale={0.75}>
+      {/* flipped so the camera sees the underside, like the reference */}
       <mesh geometry={geo}>
-        <meshStandardMaterial color="#d9dde5" metalness={1} roughness={0.12} envMapIntensity={1.6} />
+        <meshStandardMaterial color="#eef1f6" metalness={0.85} roughness={0.18} emissive="#2a2d33" />
       </mesh>
-      <mesh position={[0, 0.55, 0]}>
-        <cylinderGeometry args={[1.35, 1.55, 0.55, 96, 1, true]} />
+      {/* concentric chrome rings on the underside */}
+      <mesh position={[0, 0.36, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[1.0, 0.05, 16, 96]} />
+        <meshStandardMaterial color="#f4f6fa" metalness={1} roughness={0.12} emissive="#3a3d44" />
+      </mesh>
+      <mesh position={[0, 0.36, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.55, 0.05, 16, 96]} />
+        <meshStandardMaterial color="#f4f6fa" metalness={1} roughness={0.12} emissive="#3a3d44" />
+      </mesh>
+      <mesh position={[0, -0.22, 0]}>
+        <cylinderGeometry args={[1.25, 1.5, 0.4, 96, 1, true]} />
         <meshStandardMaterial color="#050505" metalness={0.9} roughness={0.35} side={THREE.DoubleSide} />
       </mesh>
     </group>
@@ -44,40 +62,51 @@ type WheelProps = {
 };
 
 function Wheel({ target, onProgress }: WheelProps) {
-  const wheel = useRef<THREE.Group>(null);
-  const current = useRef<number>(0);
-  const bottles = useMemo(
-    () => PERFUMES.map(() => ({ current: null as BottleHandle | null })),
-    []
+  const current = useRef(0);
+  const handles = useRef<MutableRefObject<BottleHandle | null>[]>(
+    Array.from({ length: M }, () => ({ current: null }))
   );
   const groups = useRef<(THREE.Group | null)[]>([]);
 
   useFrame((state, dt) => {
-    // smooth follow
     current.current = THREE.MathUtils.damp(current.current, target.current, 5, dt);
     const c = current.current;
     onProgress(c);
 
-    PERFUMES.forEach((_, i) => {
-      const d = i - c; // distance from the centre, in "slots"
+    for (let i = 0; i < M; i++) {
+      let d = i - c;
+      d -= M * Math.round(d / M); // wrap happens at +-M/2 slots = far off-screen
       const g = groups.current[i];
-      if (!g) return;
-      const theta = -Math.PI / 2 + d * STEP * -1; // active one sits at the bottom of the wheel
-      g.position.set(Math.cos(theta) * RADIUS, PIVOT_Y + Math.sin(theta) * RADIUS, -Math.abs(d) * 0.35);
-      g.rotation.z = theta + Math.PI / 2 - 0.08;
-      g.rotation.y = d * 0.12 + Math.sin(state.clock.elapsedTime * 0.6 + i) * 0.06; // gentle float
-      g.rotation.x = -0.05;
+      if (!g) continue;
+      // circle path near the centre, then a straight continuation (tangent) so bottles keep travelling off-screen
+      const dc = Math.max(-CIRCLE_UNTIL, Math.min(CIRCLE_UNTIL, d));
+      const over = d - dc; // slots beyond the circle part (0 for most bottles)
+      const a = dc * STEP; // angle on the ring (0 = front/centre)
+      const x = Math.sin(a) * RADIUS + over * RADIUS * STEP * Math.cos(a);
+      const zExtra = -Math.abs(over) * RADIUS * STEP * Math.abs(Math.sin(a));
+      // one smooth arch through all bottles + a lean that grows smoothly with x (no per-bottle zigzag, no phase-shifted bobbing)
+      g.position.set(x, -ARC * x * x, Math.cos(a) * RADIUS - RADIUS + zExtra);
+      g.rotation.set(0, a, TILT * x);
       const focus = Math.max(0, 1 - Math.abs(d) / 1.35);
-      bottles[i]?.current?.setFocus(focus * focus);
-      g.visible = Math.abs(d) < 5;
-    });
+      handles.current[i].current?.setFocus(focus * focus);
+      g.visible = Math.abs(d) < M / 2 - 0.5;
+    }
   });
 
   return (
-    <group ref={wheel}>
-      {PERFUMES.map((p, i) => (
-        <group key={p.name} ref={(el: THREE.Group | null) => { groups.current[i] = el; }}>
-          <PerfumeBottle perfume={p} bottleRef={bottles[i]} />
+    <group position={[0, -0.05, 0]} rotation={[RING_PITCH, 0, 0]}>
+      {Array.from({ length: M }, (_, i) => PERFUMES[i % N]).map((p, i) => (
+        <group
+          key={`${p.name}-${i}`}
+          ref={(el: THREE.Group | null) => {
+            groups.current[i] = el;
+          }}
+        >
+          <group scale={BOTTLE_SCALE}>
+            <group position={[0, -0.5, 0]}>
+              <PerfumeBottle perfume={p} handleRef={handles.current[i]} />
+            </group>
+          </group>
         </group>
       ))}
     </group>
@@ -101,27 +130,31 @@ export default function PerfumeCarousel() {
   const sliderRef = useRef<HTMLInputElement>(null);
   const idle = useRef<ReturnType<typeof setTimeout> | null>(null);
   const drag = useRef<number | null>(null);
+  const activeRef = useRef<number>(0);
   const [active, setActive] = useState(0);
-  const activeRef = useRef(0);
 
-  const clamp = useCallback((v: number) => Math.min(N - 1, Math.max(0, v)), []);
-  const snapSoon = useCallback(() => {
+  const wrap = (v: number) => ((v % N) + N) % N;
+  const snapSoon = () => {
     if (idle.current) clearTimeout(idle.current);
-    idle.current = setTimeout(() => (target.current = Math.round(target.current)), 140);
-  }, []);
-  const go = useCallback((i: number) => (target.current = clamp(i)), [clamp]);
+    idle.current = setTimeout(() => {
+      target.current = Math.round(target.current);
+    }, 140);
+  };
+  const go = (i: number) => {
+    target.current = i; // unbounded: the wheel wraps around
+  };
 
-  const onProgress = useCallback((c: number) => {
-    if (sliderRef.current) {
-      sliderRef.current.value = c.toString();
-      sliderRef.current.style.setProperty("--p", `${(c / (N - 1)) * 100}%`);
+  const onProgress = (c: number) => {
+    const el = sliderRef.current;
+    if (el) {
+      el.value = String(Math.min(N - 1, wrap(c)));
     }
-    const r = Math.round(c);
+    const r = wrap(Math.round(c));
     if (r !== activeRef.current) {
       activeRef.current = r;
       setActive(r);
     }
-  }, []);
+  };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -130,7 +163,7 @@ export default function PerfumeCarousel() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [go]);
+  }, []);
 
   const p = PERFUMES[active];
 
@@ -139,13 +172,15 @@ export default function PerfumeCarousel() {
       className="pc"
       style={{ "--glow": p.glow } as CSSProperties}
       onWheel={(e) => {
-        target.current = clamp(target.current + (e.deltaY + e.deltaX) * 0.0025);
+        target.current += (e.deltaY + e.deltaX) * 0.0025;
         snapSoon();
       }}
-      onPointerDown={(e) => (drag.current = e.clientX)}
+      onPointerDown={(e) => {
+        drag.current = e.clientX;
+      }}
       onPointerMove={(e) => {
         if (drag.current == null) return;
-        target.current = clamp(target.current - (e.clientX - drag.current) * 0.006);
+        target.current -= (e.clientX - drag.current) * 0.006;
         drag.current = e.clientX;
       }}
       onPointerUp={() => {
@@ -161,7 +196,7 @@ export default function PerfumeCarousel() {
     >
       <div className="pc-glow" />
 
-      <Canvas className="pc-canvas" camera={{ position: [0, 0.2, 12], fov: 35 }} dpr={[1, 2]}>
+      <Canvas className="pc-canvas" camera={{ position: [0, 0, 11], fov: 38 }} dpr={[1, 2]}>
         <Studio />
         <ambientLight intensity={0.25} />
         <spotLight position={[0, 6, 6]} angle={0.6} penumbra={1} intensity={60} />
@@ -208,7 +243,9 @@ export default function PerfumeCarousel() {
           defaultValue={0}
           aria-label="Choose perfume"
           onChange={(e) => {
-            target.current = parseFloat(e.target.value);
+            // jump to the chosen perfume by the shortest way round the loop
+            const v = parseFloat(e.target.value);
+            target.current = v + N * Math.round((target.current - v) / N);
             snapSoon();
           }}
         />

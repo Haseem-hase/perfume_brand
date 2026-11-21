@@ -1,56 +1,59 @@
 "use client";
 import * as THREE from "three";
-import { useRef, MutableRefObject, useLayoutEffect } from "react";
+import { useRef, type MutableRefObject } from "react";
 import { RoundedBox } from "@react-three/drei";
 import type { Perfume } from "./Perfumes";
 
-export type BottleHandle = {
-  setFocus: (focus: number) => void;
-};
+export type BottleHandle = { setFocus: (focus: number) => void };
 
-type PerfumeBottleProps = {
+type Props = {
   perfume: Perfume;
-  bottleRef: MutableRefObject<BottleHandle | null>;
+  handleRef: MutableRefObject<BottleHandle | null>;
 };
 
 /**
- * Procedural perfume bottle (no model file needed).
- * `focus` (0..1) is set by the carousel every frame: 1 = centre/active, 0 = far away (dark).
- * To use your own GLB later, replace the contents of this component with <primitive object={gltf.scene} />
- * and keep the `focus` -> material brightness logic in the carousel.
+ * Procedural perfume bottle. focus: 1 = centre/active, 0 = far away (dark).
+ * To use your own GLB later, replace the meshes with <primitive object={gltf.scene} />.
  */
-export default function PerfumeBottle({ perfume, bottleRef }: PerfumeBottleProps) {
+export default function PerfumeBottle({ perfume, handleRef }: Props) {
   const glass = useRef<THREE.MeshPhysicalMaterial>(null);
   const liquid = useRef<THREE.MeshStandardMaterial>(null);
   const cap = useRef<THREE.MeshStandardMaterial>(null);
+  const base = useRef<THREE.MeshPhysicalMaterial>(null);
+  const label = useRef<THREE.MeshStandardMaterial>(null);
 
-  // exposed to the carousel so it can animate brightness without React re-renders
-  useLayoutEffect(() => {
-    if (bottleRef) {
-      bottleRef.current = {
-        setFocus(f: number) {
-          const k = 0.12 + 0.88 * f;
-          if (glass.current) {
-            glass.current.color.set(perfume.glass).multiplyScalar(0.35 + 0.65 * f);
-            glass.current.envMapIntensity = 0.15 + 1.6 * f;
-          }
-          if (liquid.current) {
-            liquid.current.color.set(perfume.liquid).multiplyScalar(k);
-            liquid.current.emissive.set(perfume.liquid).multiplyScalar(0.35 * f);
-          }
-          if (cap.current) {
-            cap.current.color.set(perfume.cap).multiplyScalar(k);
-            cap.current.envMapIntensity = 0.2 + 2.2 * f;
-          }
-        },
-      };
-    }
-  });
+  handleRef.current = {
+    setFocus(f: number) {
+      const k = 0.12 + 0.88 * f;
+      if (glass.current) {
+        glass.current.color.set(perfume.glass).multiplyScalar(0.25 + 0.75 * f);
+        // env reflections are scaled with specularIntensity / clearcoat (envMapIntensity is ignored with scene.environment)
+        glass.current.specularIntensity = 0.04 + 0.96 * f;
+        glass.current.clearcoat = 0.05 + 0.95 * f;
+      }
+      if (liquid.current) {
+        liquid.current.color.set(perfume.liquid).multiplyScalar(k);
+        liquid.current.emissive.set(perfume.liquid).multiplyScalar(0.35 * f);
+      }
+      if (base.current) {
+        base.current.color.set("#cfd6e0").multiplyScalar(0.15 + 0.85 * f);
+        base.current.specularIntensity = 0.04 + 0.96 * f;
+        base.current.clearcoat = 0.05 + 0.95 * f;
+      }
+      if (label.current) {
+        label.current.opacity = 0.02 + 0.1 * f;
+        label.current.roughness = 1 - 0.5 * f;
+      }
+      if (cap.current) {
+        cap.current.color.set(perfume.cap).multiplyScalar(k);
+      }
+    },
+  };
 
   return (
     <group>
       {/* glass body */}
-      <RoundedBox args={[1.35, 1.9, 0.62]} radius={0.12} smoothness={6} position={[0, 0, 0]}>
+      <RoundedBox args={[1.35, 1.9, 0.62]} radius={0.12} smoothness={6}>
         <meshPhysicalMaterial
           ref={glass}
           color={perfume.glass}
@@ -70,7 +73,7 @@ export default function PerfumeBottle({ perfume, bottleRef }: PerfumeBottleProps
 
       {/* heavy glass base */}
       <RoundedBox args={[1.42, 0.14, 0.7]} radius={0.05} smoothness={4} position={[0, -0.98, 0]}>
-        <meshPhysicalMaterial color="#cfd6e0" metalness={0.3} roughness={0.05} transparent opacity={0.5} clearcoat={1} />
+        <meshPhysicalMaterial ref={base} color="#cfd6e0" metalness={0.3} roughness={0.05} transparent opacity={0.5} clearcoat={1} />
       </RoundedBox>
 
       {/* neck */}
@@ -89,10 +92,10 @@ export default function PerfumeBottle({ perfume, bottleRef }: PerfumeBottleProps
         <meshStandardMaterial color="#ffffff" metalness={1} roughness={0.1} />
       </mesh>
 
-      {/* simple front label */}
+      {/* front label */}
       <mesh position={[0, 0.05, 0.315]}>
         <planeGeometry args={[0.8, 0.9]} />
-        <meshStandardMaterial color="#ffffff" transparent opacity={0.1} />
+        <meshStandardMaterial ref={label} color="#ffffff" transparent opacity={0.1} />
       </mesh>
     </group>
   );
