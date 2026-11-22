@@ -18,7 +18,7 @@
 .pc-sound i:nth-child(2){animation-delay:.15s}.pc-sound i:nth-child(3){animation-delay:.3s}.pc-sound i:nth-child(4){animation-delay:.45s}
 @keyframes eq{from{height:5px}to{height:13px}}
 
-.pc-logo{position:absolute;left:50%;top:58px;transform:translateX(-50%);text-align:center;font-style:italic;
+.pc-logo{position:absolute;left:50%;top:22px;transform:translateX(-50%);text-align:center;font-style:italic;
   font-weight:900;font-size:34px;line-height:.9;letter-spacing:-.02em;text-shadow:0 0 30px rgba(255,255,255,.35)}
 .pc-right{display:flex;align-items:center;gap:36px}
 .pc-menu{display:flex;align-items:center;gap:12px;background:none;border:0;color:#fff;font:inherit;cursor:pointer}
