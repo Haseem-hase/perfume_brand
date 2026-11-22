@@ -1,14 +1,11 @@
-import HeroSection from '@/components/HomeComponents/HeroSection'
+import HeroSection from '@/components/HeroSection'
 import PerfumeCarousel from '@/components/PerfumeCarousel/PerfumeCarousel'
-import React from 'react'
 
-const page = () => {
+export default function Page() {
   return (
-    <div>
-      <HeroSection/>
-       <PerfumeCarousel />;
-      </div>
+    <>
+      <HeroSection />
+      <PerfumeCarousel />
+    </>
   )
 }
-
-export default page
