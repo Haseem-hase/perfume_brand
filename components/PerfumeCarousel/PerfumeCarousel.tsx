@@ -384,25 +384,6 @@ export default function PerfumeCarousel() {
         <Wheel target={target} onProgress={onProgress} />
       </Canvas>
 
-      {/* top bar */}
-      <div className="pc-line" />
-      <header className="pc-nav">
-        <div className="pc-sound">
-          ON <i /><i /><i /><i />
-        </div>
-        <div className={`pc-logo ${display.className}`}>
-          MAISON
-          <br />
-          ÉLIXIR
-        </div>
-        <div className="pc-right">
-          <button className="pc-menu">
-            <span className="pc-dots"><b /><b /><b /><b /></span>MENU
-          </button>
-          <button className="pc-contact">CONTACT</button>
-        </div>
-      </header>
-
       {/* corner brackets */}
       <span className="pc-c tl" /><span className="pc-c tr" /><span className="pc-c bl" /><span className="pc-c br" />
 
