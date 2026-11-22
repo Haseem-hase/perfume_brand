@@ -3,12 +3,12 @@ import * as THREE from "three";
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type MutableRefObject } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Environment, Lightformer, RoundedBox } from "@react-three/drei";
-import { Archivo } from "next/font/google";
+import { Outfit } from "next/font/google";
 import PerfumeBottle, { type BottleHandle } from "./PerfumeBottle";
 import { PERFUMES } from "./Perfumes";
 import "./Carousel.css";
 
-const display = Archivo({ subsets: ["latin"], weight: ["900"], style: ["italic"] });
+const display = Outfit({ subsets: ["latin"], weight: ["900"] });
 
 const N = PERFUMES.length;
 const RADIUS = 13; // radius of the horizontal ring (fitted to the reference screenshot)
@@ -242,8 +242,9 @@ type WheelProps = {
 
 function Wheel({ target, onProgress }: WheelProps) {
   const current = useRef(0);
-  const handles = useRef<MutableRefObject<BottleHandle | null>[]>(
-    Array.from({ length: M }, () => ({ current: null }))
+  const handles = useMemo(
+    () => Array.from({ length: M }, () => ({ current: null as BottleHandle | null })),
+    []
   );
   const groups = useRef<(THREE.Group | null)[]>([]);
 
@@ -267,7 +268,7 @@ function Wheel({ target, onProgress }: WheelProps) {
       g.position.set(x, -ARC * x * x, Math.cos(a) * RADIUS - RADIUS + zExtra);
       g.rotation.set(0, a, TILT * x);
       const focus = Math.max(0, 1 - Math.abs(d) / 1.35);
-      handles.current[i].current?.setFocus(focus * focus);
+      handles[i]?.current?.setFocus(focus * focus);
       g.visible = Math.abs(d) < M / 2 - 0.5;
     }
   });
@@ -283,7 +284,7 @@ function Wheel({ target, onProgress }: WheelProps) {
         >
           <group scale={BOTTLE_SCALE}>
             <group position={[0, -0.5, 0]}>
-              <PerfumeBottle perfume={p} handleRef={handles.current[i]} />
+              <PerfumeBottle perfume={p} handleRef={handles[i]} />
             </group>
           </group>
         </group>

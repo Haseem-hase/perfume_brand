@@ -1,6 +1,6 @@
 "use client";
 import * as THREE from "three";
-import { useRef, type MutableRefObject } from "react";
+import { useRef, useLayoutEffect, type MutableRefObject } from "react";
 import { RoundedBox } from "@react-three/drei";
 import type { Perfume } from "./Perfumes";
 
@@ -22,33 +22,35 @@ export default function PerfumeBottle({ perfume, handleRef }: Props) {
   const base = useRef<THREE.MeshPhysicalMaterial>(null);
   const label = useRef<THREE.MeshStandardMaterial>(null);
 
-  handleRef.current = {
-    setFocus(f: number) {
-      const k = 0.12 + 0.88 * f;
-      if (glass.current) {
-        glass.current.color.set(perfume.glass).multiplyScalar(0.25 + 0.75 * f);
-        // env reflections are scaled with specularIntensity / clearcoat (envMapIntensity is ignored with scene.environment)
-        glass.current.specularIntensity = 0.04 + 0.96 * f;
-        glass.current.clearcoat = 0.05 + 0.95 * f;
-      }
-      if (liquid.current) {
-        liquid.current.color.set(perfume.liquid).multiplyScalar(k);
-        liquid.current.emissive.set(perfume.liquid).multiplyScalar(0.35 * f);
-      }
-      if (base.current) {
-        base.current.color.set("#cfd6e0").multiplyScalar(0.15 + 0.85 * f);
-        base.current.specularIntensity = 0.04 + 0.96 * f;
-        base.current.clearcoat = 0.05 + 0.95 * f;
-      }
-      if (label.current) {
-        label.current.opacity = 0.02 + 0.1 * f;
-        label.current.roughness = 1 - 0.5 * f;
-      }
-      if (cap.current) {
-        cap.current.color.set(perfume.cap).multiplyScalar(k);
-      }
-    },
-  };
+  useLayoutEffect(() => {
+    handleRef.current = {
+      setFocus(f: number) {
+        const k = 0.12 + 0.88 * f;
+        if (glass.current) {
+          glass.current.color.set(perfume.glass).multiplyScalar(0.25 + 0.75 * f);
+          // env reflections are scaled with specularIntensity / clearcoat (envMapIntensity is ignored with scene.environment)
+          glass.current.specularIntensity = 0.04 + 0.96 * f;
+          glass.current.clearcoat = 0.05 + 0.95 * f;
+        }
+        if (liquid.current) {
+          liquid.current.color.set(perfume.liquid).multiplyScalar(k);
+          liquid.current.emissive.set(perfume.liquid).multiplyScalar(0.35 * f);
+        }
+        if (base.current) {
+          base.current.color.set("#cfd6e0").multiplyScalar(0.15 + 0.85 * f);
+          base.current.specularIntensity = 0.04 + 0.96 * f;
+          base.current.clearcoat = 0.05 + 0.95 * f;
+        }
+        if (label.current) {
+          label.current.opacity = 0.02 + 0.1 * f;
+          label.current.roughness = 1 - 0.5 * f;
+        }
+        if (cap.current) {
+          cap.current.color.set(perfume.cap).multiplyScalar(k);
+        }
+      },
+    };
+  });
 
   return (
     <group>
