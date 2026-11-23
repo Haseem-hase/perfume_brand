@@ -14,12 +14,14 @@ export default function TestimonialSection() {
   ];
 
   return (
-    <section className="py-16 px-12">
-      <div className="mx-auto">
-        <h2 className="text-4xl md:text-5xl font-bold text-center mb-16">
+    <section className="py-10">
+      <div className="px-10 mx-auto">
+        <h2 className="text-4xl md:text-4xl uppercase mb-16">
           Testimonials
         </h2>
-        <ParallaxScroll images={images} />
+        <div className="px-2">
+          <ParallaxScroll images={images} />
+        </div>
       </div>
     </section>
   );
