@@ -1,5 +1,6 @@
 import HeroSection from '@/components/HeroSection'
 import PerfumeCarousel from '@/components/PerfumeCarousel/PerfumeCarousel'
+import TestimonialSection from '@/components/TestimonialSection'
 
 export default function Page() {
   return (
@@ -16,6 +17,8 @@ export default function Page() {
       </section>
 
       <PerfumeCarousel />
+
+      <TestimonialSection />
     </>
   )
 }
