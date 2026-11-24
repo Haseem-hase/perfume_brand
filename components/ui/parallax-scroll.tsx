@@ -15,8 +15,8 @@ export const ParallaxScroll = ({
 }) => {
   const gridRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
-    container: gridRef,
-    offset: ["start start", "end start"],
+    target: gridRef,
+    offset: ["start end", "end start"],
   });
  
   const translateFirst = useTransform(scrollYProgress, [0, 1], [0, -200]);
@@ -31,14 +31,10 @@ export const ParallaxScroll = ({
  
   return (
     <div
-      className={cn("h-[40rem] items-start overflow-y-auto w-full scrollbar-hide", className)}
+      className={cn("w-full", className)}
       ref={gridRef}
-      style={{
-        scrollbarWidth: 'none',
-        msOverflowStyle: 'none',
-      }}
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-start w-full gap-10 py-40">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-start w-full gap-10 py-20">
         <div className="grid gap-10">
           {firstPart.map((el, idx) => (
             <motion.div

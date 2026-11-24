@@ -16,7 +16,7 @@ export default function TestimonialSection() {
   return (
     <section className="py-10">
       <div className="px-10 mx-auto">
-        <h2 className="text-4xl md:text-4xl uppercase mb-16">
+        <h2 className="text-4xl md:text-4xl uppercase mb-6">
           Testimonials
         </h2>
         <div className="px-2">
